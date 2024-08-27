@@ -1,0 +1,317 @@
+getgenv().SecureMode = true
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "🔥 War Tycoon Hub | Abacate7 Menu V2",
+    LoadingTitle = "War Tycoon (PVP SCRIPT) by abacate7",
+    LoadingSubtitle = "by abacate7 (discord)",
+    ConfigurationSaving = {
+        Enabled = false,
+        FolderName = nil,
+        FileName = "Example Hub"
+    },
+    Discord = {
+        Enabled = true,
+        Invite = "uZgx2YAgN5", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
+        RememberJoins = false -- Set this to false to make them join the discord every time they load it up
+    },
+
+    KeySystem = false, -- Set this to true to use our key system
+    KeySettings = {
+        Title = "Key | Abacate Hub",
+        Subtitle = "Key System",
+        Note = "Key In Discord Server (discord.gg/uZgx2YAgN5)",
+        FileName = "Abacate7HubKey1", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+        SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+        GrabKeyFromSite = true, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+        Key = {"Abacate7gg"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+    }
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local gameSystems = workspace:WaitForChild("Game Systems")
+
+local validFolders = {"Gunship Workspace", "Plane Workspace", "Tank Workspace", "Boat Workspace", "Drone Workspace", "Helicopter Workspace"}
+
+_G.espRange = 1500
+_G.MyVehicle = nil
+
+local MainTab = Window:CreateTab("🏠 Home", nil) -- Title, Image
+local MainSection = MainTab:CreateSection("Main")
+
+local GraphicsTab = Window:CreateTab("📊 Graphics", nil)
+
+Rayfield:Notify({
+    Title = "Script Loaded!",
+    Content = "by abacate7",
+    Duration = 5,
+    Image = 0,
+    Actions = {
+        Ignore = {
+            Name = "Ok",
+            Callback = function()
+                print("Menu Loaded!")
+            end
+        }
+    }
+})
+
+local Button = MainTab:CreateButton({
+    Name = "Infinite Jump Toggle",
+    Callback = function()
+        _G.infinjump = not _G.infinjump
+
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Abacate7 Menu V1",
+            Text = "Infinite Jump Activated!",
+            Duration = 5
+        })
+
+        game:GetService("UserInputService").JumpRequest:Connect(function()
+            if _G.infinjump and LocalPlayer.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                LocalPlayer.Character.Humanoid:ChangeState("Jumping")
+            end
+        end)
+    end
+})
+
+local Slider = MainTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {1, 350},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 16,
+    Flag = "sliderws",
+    Callback = function(Value)
+        LocalPlayer.Character.Humanoid.WalkSpeed = (Value)
+    end
+})
+
+local Slider = MainTab:CreateSlider({
+    Name = "JumpPower",
+    Range = {1, 350},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 16,
+    Flag = "sliderjp",
+    Callback = function(Value)
+        LocalPlayer.Character.Humanoid.JumpPower = (Value)
+    end
+})
+
+local OtherSection = MainTab:CreateSection("Esp")
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Players Visual",
+    CurrentValue = false,
+    Flag = "ToggleESPPLayer",
+    Callback = function(Value)
+        _G.EspPlayers = Value
+    end
+})
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Vehicle Visual",
+    CurrentValue = false,
+    Flag = "ToggleESPVehicle",
+    Callback = function(Value)
+        _G.EspVehicle = Value
+    end
+})
+
+local Slider = MainTab:CreateSlider({
+    Name = "Esp Distance",
+    Range = {200, 3000},
+    Increment = 10,
+    Suffix = "Studs",
+    CurrentValue = 1500,
+    Flag = "sliderdistancewall",
+    Callback = function(Value)
+        _G.espRange = (Value)
+    end
+})
+
+local HitboxSection = MainTab:CreateSection("Hitbox")
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Hitbox",
+    CurrentValue = false,
+    Flag = "ToggleHitboxExpander",
+    Callback = function(Value)
+        _G.HitboxExpander = Value
+    end
+})
+
+local Slider = MainTab:CreateSlider({
+    Name = "Head Size",
+    Range = {5, 100},
+    Increment = 1,
+    Suffix = "Studs³",
+    CurrentValue = 5,
+    Flag = "sliderhitboxsize",
+    Callback = function(Value)
+        _G.HeadSize = (Value)
+    end
+})
+
+local GraphicsSection = GraphicsTab:CreateSection("Graphics")
+
+local Button = GraphicsTab:CreateDropdown({
+    Name = "Graphic Selection",
+    Options = {"ShadowMap", "Voxel", "Future"},
+    CurrentOption = {"ShadowMap"},
+    MultipleOptions = false,
+    Flag = "graphictypebutton",
+    Callback = function(Value)
+        game:GetService("Lighting").Technology = Value[1]
+    end
+})
+
+Button:Set(game:GetService("Lighting").Technology.Name)
+
+local function CreateXRay()
+    local highlight = Instance.new("Highlight")
+    highlight.OutlineColor = Color3.new(1, 0, 0)
+    highlight.Name = "XRay"
+    return highlight
+end
+
+local function CreateEspName()
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "NamePlayer"
+    billboard.AlwaysOnTop = true
+    billboard.MaxDistance = 1500
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 1.8, 0)
+
+    local textlabel = Instance.new("TextLabel")
+    textlabel.BackgroundTransparency = 1
+    textlabel.Position = UDim2.new(0, -50, 0, 0)
+    textlabel.Size = UDim2.new(0, 300, 0, 20)
+    textlabel.TextColor3 = Color3.new(1, 1, 1)
+    textlabel.TextSize = 15
+    textlabel.Text = "Non Team"
+    textlabel.Font = Enum.Font.SourceSansBold
+    textlabel.Parent = billboard
+
+    return billboard, textlabel
+end
+
+local function handlePlayer(plr)
+    if not plr.Character or not LocalPlayer.Character or not LocalPlayer.Character.PrimaryPart then
+        return
+    end
+
+    local head = plr.Character:FindFirstChild("Head")
+    if not head then
+        return
+    end
+
+    local distance = (plr.Character.PrimaryPart.Position - LocalPlayer.Character.PrimaryPart.Position).Magnitude
+    local nameBillboard = head:FindFirstChild("NamePlayer")
+    local xRay = plr.Character:FindFirstChild("XRay")
+
+    if nameBillboard then
+        nameBillboard.MaxDistance = _G.espRange
+    end
+
+    if distance > _G.espRange then
+        if xRay then
+            xRay:Destroy()
+        end
+        if nameBillboard then
+            nameBillboard:Destroy()
+        end
+        return
+    end
+
+    if _G.EspPlayers then
+        if not xRay then
+            local newXRay = CreateXRay()
+            newXRay.FillColor = plr.TeamColor.Color
+            newXRay.OutlineColor = plr.TeamColor.Color
+            newXRay.Parent = plr.Character
+        end
+
+        if not nameBillboard then
+            local billboard, textlabel = CreateEspName()
+            billboard.Adornee = head
+            textlabel.Text = tostring(plr.Team)
+            textlabel.TextColor3 = plr.TeamColor.Color
+            textlabel.TextStrokeTransparency = 0
+            billboard.Parent = head
+        end
+    else
+        if xRay then
+            xRay:Destroy()
+        end
+        if nameBillboard then
+            nameBillboard:Destroy()
+        end
+    end
+end
+
+local function handleVehicle(obj)
+    if obj:GetAttribute("Owner") == LocalPlayer.Name then
+        if obj:FindFirstChild("XRay") then
+            obj:Destroy()
+        end
+    else
+        if not obj:FindFirstChild("XRay") and _G.EspVehicle then
+            local highlight = CreateXRay()
+            highlight.FillColor = Color3.new(0, 0, 1)
+            highlight.OutlineColor = Color3.new(0, 0, 1)
+            highlight.Parent = obj
+        else
+            if obj:FindFirstChild("XRay") and not _G.EspVehicle then
+                obj.XRay:Destroy()
+            end
+        end
+    end
+end
+
+local function handleHitbox(player)
+    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+        player.Character.Head.Size = _G.HitboxExpander and Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize) or
+                                         Vector3.new(1.198, 1.202, 1.198)
+        player.Character.Head.Transparency = _G.HitboxExpander and 0.9 or 0
+        player.Character.Head.BrickColor = BrickColor.new("Red")
+        player.Character.Head.Material = _G.HitboxExpander and Enum.Material.Neon or Enum.Material.SmoothPlastic
+        player.Character.Head.CanCollide = false
+        player.Character.Head.Massless = true
+    end
+end
+
+local function setVehicle()
+    if LocalPlayer.Character.Humanoid.SeatPart then
+        _G.MyVehicle = LocalPlayer.Character.Humanoid.SeatPart.Parent:IsA("Folder") and LocalPlayer.Character.Humanoid.SeatPart.Parent.Parent or LocalPlayer.Character.Humanoid.SeatPart.Parent
+    else
+        _G.MyVehicle = nil
+    end
+    print(_G.MyVehicle)
+end
+
+game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
+    for _, player in Players:GetPlayers() do
+        if player ~= LocalPlayer then
+            handlePlayer(player)
+            handleHitbox(player)
+        end
+    end
+
+    for _, foldername in validFolders do
+        local folder = gameSystems:FindFirstChild(foldername)
+        if folder then
+            for _, model in folder:GetChildren() do
+                if model:IsA("Model") then
+                    handleVehicle(model)
+                end
+            end
+        end
+    end
+
+    setVehicle()
+end)

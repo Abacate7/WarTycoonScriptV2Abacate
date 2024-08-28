@@ -24,7 +24,7 @@ local Window = Rayfield:CreateWindow({
         Note = "Key In Discord Server (discord.gg/uZgx2YAgN5)",
         FileName = "Abacate7HubKey1", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
         SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-        GrabKeyFromSite = true, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+        GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
         Key = {"Abacate7gg"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
     }
 })
@@ -65,7 +65,7 @@ local Button = MainTab:CreateButton({
         _G.infinjump = not _G.infinjump
 
         game.StarterGui:SetCore("SendNotification", {
-            Title = "Abacate7 Menu V1",
+            Title = "Abacate7 Menu V2",
             Text = "Infinite Jump Activated!",
             Duration = 5
         })
@@ -147,10 +147,10 @@ local Toggle = MainTab:CreateToggle({
 
 local Slider = MainTab:CreateSlider({
     Name = "Head Size",
-    Range = {5, 100},
+    Range = {10, 100},
     Increment = 1,
     Suffix = "Studs³",
-    CurrentValue = 5,
+    CurrentValue = 10,
     Flag = "sliderhitboxsize",
     Callback = function(Value)
         _G.HeadSize = (Value)
@@ -213,6 +213,7 @@ local function handlePlayer(plr)
     local distance = (plr.Character.PrimaryPart.Position - LocalPlayer.Character.PrimaryPart.Position).Magnitude
     local nameBillboard = head:FindFirstChild("NamePlayer")
     local xRay = plr.Character:FindFirstChild("XRay")
+    local ShieldBool = plr.Character:FindFirstChild("BaseShieldForceField")
 
     if nameBillboard then
         nameBillboard.MaxDistance = _G.espRange
@@ -243,6 +244,9 @@ local function handlePlayer(plr)
             textlabel.TextColor3 = plr.TeamColor.Color
             textlabel.TextStrokeTransparency = 0
             billboard.Parent = head
+        else
+            local textlabel = nameBillboard.TextLabel
+            textlabel.Text = ShieldBool and tostring(plr.Team) .. " Shield" or tostring(plr.Team)
         end
     else
         if xRay then
@@ -286,12 +290,13 @@ local function handleHitbox(player)
 end
 
 local function setVehicle()
+    if LocalPlayer.Character then return end
+    
     if LocalPlayer.Character.Humanoid.SeatPart then
         _G.MyVehicle = LocalPlayer.Character.Humanoid.SeatPart.Parent:IsA("Folder") and LocalPlayer.Character.Humanoid.SeatPart.Parent.Parent or LocalPlayer.Character.Humanoid.SeatPart.Parent
     else
         _G.MyVehicle = nil
     end
-    print(_G.MyVehicle)
 end
 
 game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
